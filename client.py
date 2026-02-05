@@ -1,4 +1,4 @@
-# client.py — stdlib-only dashboard GUI trading client
+# client.py — stdlib-only dashboard GUI trading client (with ticker-rate slider)
 import json
 import time
 import threading
@@ -8,10 +8,7 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 
 SERVER = "http://127.0.0.1:8000"
-
-# Slower refresh so users can react
-POLL_SEC = 2.5
-START_CASH = 10_000.0  # used for P/L display only (server also starts at 10k)
+START_CASH = 10_000.0  # used for P/L display only
 
 TOKEN = None
 
@@ -47,6 +44,10 @@ class App(tk.Tk):
         self.history = {}       # symbol -> [prices]
         self.stop_evt = threading.Event()
 
+        # Ticker/refresh rate (seconds) — adjustable via slider
+        self._poll_lock = threading.Lock()
+        self.poll_sec = 2.5
+
         self._theme()
         self._build_login()
 
@@ -76,7 +77,6 @@ class App(tk.Tk):
         style.configure("Header.TLabel", background=self.bg, foreground=self.text, font=("Segoe UI", 16, "bold"))
         style.configure("SubHeader.TLabel", background=self.bg, foreground=self.muted, font=("Segoe UI", 10))
         style.configure("TButton", padding=8)
-        style.configure("Accent.TButton", background=self.accent)
         style.map("TButton", background=[("active", "#1b2a4b")])
 
         style.configure(
@@ -98,8 +98,22 @@ class App(tk.Tk):
             w.destroy()
 
     def _card(self, parent, padx=14, pady=12):
-        f = ttk.Frame(parent, style="Card.TFrame", padding=(padx, pady))
-        return f
+        return ttk.Frame(parent, style="Card.TFrame", padding=(padx, pady))
+
+    def _set_poll_sec(self, v):
+        # slider callback (runs on UI thread)
+        try:
+            val = float(v)
+        except Exception:
+            return
+        with self._poll_lock:
+            self.poll_sec = val
+        if hasattr(self, "msg_var"):
+            self.msg_var.set(f"Ticker rate: {val:.1f}s per refresh")
+
+    def _get_poll_sec(self):
+        with self._poll_lock:
+            return float(self.poll_sec)
 
     # ---------- Login ----------
     def _build_login(self):
@@ -179,37 +193,32 @@ class App(tk.Tk):
         self._clear()
         self.configure(bg=self.bg)
 
-        # Top bar
         top = ttk.Frame(self, style="TFrame")
         top.pack(fill="x", padx=16, pady=(14, 8))
         ttk.Label(top, text="Dashboard", style="Header.TLabel", background=self.bg).pack(side="left")
 
-        self.top_right = ttk.Frame(top, style="TFrame")
-        self.top_right.pack(side="right")
-        ttk.Label(self.top_right, text=f"User: {username}", foreground=self.muted, background=self.bg).pack(side="right")
-        ttk.Label(self.top_right, text="  •  ", foreground=self.grid, background=self.bg).pack(side="right")
-        ttk.Label(self.top_right, text=f"Server: {SERVER}", foreground=self.muted, background=self.bg).pack(side="right")
+        tr = ttk.Frame(top, style="TFrame")
+        tr.pack(side="right")
+        ttk.Label(tr, text=f"User: {username}", foreground=self.muted, background=self.bg).pack(side="right")
+        ttk.Label(tr, text="  •  ", foreground=self.grid, background=self.bg).pack(side="right")
+        ttk.Label(tr, text=f"Server: {SERVER}", foreground=self.muted, background=self.bg).pack(side="right")
 
-        # Main layout
         main = ttk.Frame(self, style="TFrame")
         main.pack(fill="both", expand=True, padx=16, pady=(0, 16))
-
         main.columnconfigure(0, weight=3)
         main.columnconfigure(1, weight=2)
         main.rowconfigure(1, weight=1)
 
-        # KPI row (cards)
         kpis = ttk.Frame(main, style="TFrame")
         kpis.grid(row=0, column=0, columnspan=2, sticky="ew", pady=(0, 12))
         for i in range(4):
             kpis.columnconfigure(i, weight=1)
 
         self.cash_kpi = self._kpi_card(kpis, 0, "Cash", "—")
-        self.pos_kpi = self._kpi_card(kpis, 1, "Positions Value", "—")
-        self.eq_kpi = self._kpi_card(kpis, 2, "Total Equity", "—")
-        self.pnl_kpi = self._kpi_card(kpis, 3, "P / L vs Start", "—")
+        self.pos_kpi  = self._kpi_card(kpis, 1, "Positions Value", "—")
+        self.eq_kpi   = self._kpi_card(kpis, 2, "Total Equity", "—")
+        self.pnl_kpi  = self._kpi_card(kpis, 3, "P / L vs Start", "—")
 
-        # Left: markets + chart
         left = ttk.Frame(main, style="TFrame")
         left.grid(row=1, column=0, sticky="nsew", padx=(0, 10))
         left.rowconfigure(1, weight=1)
@@ -224,11 +233,7 @@ class App(tk.Tk):
         table_card.rowconfigure(0, weight=1)
         table_card.columnconfigure(0, weight=1)
 
-        self.market_tree = ttk.Treeview(
-            table_card,
-            columns=("symbol", "name", "price", "chg"),
-            show="headings",
-        )
+        self.market_tree = ttk.Treeview(table_card, columns=("symbol", "name", "price", "chg"), show="headings")
         for c, w in [("symbol", 90), ("name", 220), ("price", 120), ("chg", 90)]:
             self.market_tree.heading(c, text=c.upper())
             self.market_tree.column(c, width=w, anchor="w" if c in ("symbol", "name") else "e")
@@ -240,7 +245,6 @@ class App(tk.Tk):
 
         self.market_tree.tag_configure("up", foreground=self.green)
         self.market_tree.tag_configure("down", foreground=self.red)
-
         self.market_tree.bind("<<TreeviewSelect>>", self._on_select_market)
 
         chart_card = self._card(left)
@@ -249,7 +253,6 @@ class App(tk.Tk):
         self.canvas = tk.Canvas(chart_card, height=160, bg="#0a1020", highlightthickness=0)
         self.canvas.pack(fill="x")
 
-        # Right: positions + order
         right = ttk.Frame(main, style="TFrame")
         right.grid(row=1, column=1, sticky="nsew")
         right.rowconfigure(1, weight=1)
@@ -283,18 +286,37 @@ class App(tk.Tk):
 
         ttk.Label(order_card, text="Side", style="Muted.TLabel").grid(row=2, column=0, sticky="w", pady=(10, 0))
         self.side_var = tk.StringVar(value="BUY")
-        side = ttk.Combobox(order_card, values=("BUY", "SELL"), textvariable=self.side_var, state="readonly", width=10)
-        side.grid(row=2, column=1, sticky="e", pady=(10, 0))
+        ttk.Combobox(order_card, values=("BUY", "SELL"), textvariable=self.side_var, state="readonly", width=10)\
+            .grid(row=2, column=1, sticky="e", pady=(10, 0))
 
         ttk.Label(order_card, text="Qty", style="Muted.TLabel").grid(row=3, column=0, sticky="w", pady=(10, 0))
         self.qty_var = tk.StringVar(value="1")
         ttk.Entry(order_card, textvariable=self.qty_var, width=12).grid(row=3, column=1, sticky="e", pady=(10, 0))
 
-        self.msg_var = tk.StringVar(value=f"Refresh: {POLL_SEC:.1f}s • Market tick: server-side")
-        ttk.Label(order_card, textvariable=self.msg_var, style="Muted.TLabel").grid(row=4, column=0, columnspan=2, sticky="w", pady=(12, 0))
+        # --- Ticker-rate slider (client refresh) ---
+        ttk.Label(order_card, text="Ticker rate", style="Muted.TLabel").grid(row=4, column=0, sticky="w", pady=(12, 0))
+        self.poll_var = tk.DoubleVar(value=self._get_poll_sec())
+        slider = tk.Scale(
+            order_card,
+            from_=0.5, to=10.0,
+            resolution=0.5,
+            orient="horizontal",
+            variable=self.poll_var,
+            command=self._set_poll_sec,
+            length=260,
+            bg=self.card, fg=self.text,
+            highlightthickness=0,
+            troughcolor="#0a1020",
+            activebackground=self.accent,
+        )
+        slider.grid(row=4, column=1, sticky="e", pady=(12, 0))
 
-        ttk.Button(order_card, text="Submit Order", command=self._submit_order).grid(row=5, column=0, columnspan=2, sticky="ew", pady=(12, 0))
-        ttk.Button(order_card, text="Logout", command=self._logout).grid(row=6, column=0, columnspan=2, sticky="ew", pady=(8, 0))
+        self.msg_var = tk.StringVar(value=f"Ticker rate: {self._get_poll_sec():.1f}s per refresh")
+        ttk.Label(order_card, textvariable=self.msg_var, style="Muted.TLabel")\
+            .grid(row=5, column=0, columnspan=2, sticky="w", pady=(10, 0))
+
+        ttk.Button(order_card, text="Submit Order", command=self._submit_order).grid(row=6, column=0, columnspan=2, sticky="ew", pady=(12, 0))
+        ttk.Button(order_card, text="Logout", command=self._logout).grid(row=7, column=0, columnspan=2, sticky="ew", pady=(8, 0))
 
         order_card.columnconfigure(0, weight=1)
         order_card.columnconfigure(1, weight=1)
@@ -304,8 +326,7 @@ class App(tk.Tk):
     def _kpi_card(self, parent, col, title, value):
         c = self._card(parent, padx=16, pady=14)
         c.grid(row=0, column=col, sticky="ew", padx=(0 if col == 0 else 10, 0))
-        t = ttk.Label(c, text=title, foreground=self.muted, background=self.card)
-        t.pack(anchor="w")
+        ttk.Label(c, text=title, foreground=self.muted, background=self.card).pack(anchor="w")
         v = ttk.Label(c, text=value, font=("Segoe UI", 16, "bold"), background=self.card)
         v.pack(anchor="w", pady=(6, 0))
         return v
@@ -343,7 +364,7 @@ class App(tk.Tk):
             if not res.get("ok", True):
                 messagebox.showerror("Rejected", res.get("message", "Order rejected"))
             else:
-                self.msg_var.set(res.get("message", "Order placed"))
+                self.msg_var.set(res.get("message", f"{side} placed"))
         except Exception as e:
             messagebox.showerror("Order failed", str(e))
 
@@ -355,12 +376,12 @@ class App(tk.Tk):
                 self.after(0, lambda mk=mk, acct=acct: self._apply_data(mk, acct))
             except Exception as e:
                 self.after(0, lambda e=e: self.msg_var.set(f"Disconnected: {e}"))
-            time.sleep(POLL_SEC)
+            time.sleep(self._get_poll_sec())
 
     def _apply_data(self, markets, acct):
-        # Update price history + change calc
         rows = []
         prices_map = {}
+
         for m in markets:
             sym = m["symbol"]
             price = float(m["price"])
@@ -377,17 +398,19 @@ class App(tk.Tk):
 
             rows.append((sym, m.get("name", sym), price, chg))
 
-        # Markets table (with color tags)
         self.market_tree.delete(*self.market_tree.get_children())
         for sym, name, price, chg in sorted(rows, key=lambda x: x[0]):
             tag = "up" if chg > 0 else ("down" if chg < 0 else "")
-            self.market_tree.insert("", "end", iid=sym, values=(sym, name, f"{price:,.2f}", f"{chg:+.2f}%"), tags=(tag,) if tag else ())
+            self.market_tree.insert(
+                "", "end", iid=sym,
+                values=(sym, name, f"{price:,.2f}", f"{chg:+.2f}%"),
+                tags=(tag,) if tag else ()
+            )
 
         if self.selected_symbol and self.selected_symbol in prices_map:
             self.market_tree.selection_set(self.selected_symbol)
             self.market_tree.see(self.selected_symbol)
 
-        # Positions table + KPI metrics
         cash = float(acct.get("cash", 0.0))
         positions = acct.get("positions", {}) or {}
         pos_value = 0.0
@@ -430,7 +453,6 @@ class App(tk.Tk):
             lo -= 1
             hi += 1
 
-        # grid
         for i in range(1, 4):
             y = pad + i * (h - 2 * pad) / 4
             self.canvas.create_line(pad, y, w - pad, y, fill="#1b2743")
@@ -438,7 +460,6 @@ class App(tk.Tk):
         def X(i): return pad + i * (w - 2 * pad) / (len(hist) - 1)
         def Y(v): return pad + (hi - v) * (h - 2 * pad) / (hi - lo)
 
-        # line
         for i in range(len(hist) - 1):
             self.canvas.create_line(X(i), Y(hist[i]), X(i + 1), Y(hist[i + 1]), fill=self.accent, width=2)
 
