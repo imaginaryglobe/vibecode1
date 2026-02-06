@@ -1,3 +1,4 @@
+# team: jaden Fang, Jason Lyu
 # server.py — stdlib-only mock trading server (multi-client + slower tick)
 import json
 import threading

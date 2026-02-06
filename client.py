@@ -1,3 +1,4 @@
+# team: jaden Fang, Jason Lyu
 # client.py — stdlib-only dashboard GUI trading client (with ticker-rate slider)
 import json
 import time
