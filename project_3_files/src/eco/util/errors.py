@@ -1,3 +1,4 @@
+# author jaden fang jason lyu
 class EcoConfigError(Exception):
     def __init__(self, file_name: str, field_path: str, message: str, suggestion: str | None = None):
         detail = f"[{file_name}] {field_path}: {message}"
