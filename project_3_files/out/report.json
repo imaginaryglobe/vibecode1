@@ -1,0 +1,41 @@
+{
+  "scenario": "baseline",
+  "seed": 42,
+  "days": 3,
+  "citizenCount": 2000,
+  "totalKgCO2": 91444.70435021949,
+  "avgKgCO2PerCitizenPerDay": 15.240784058369915,
+  "byCategory": {
+    "transport": 19634.400000001267,
+    "homeEnergy": 30410.304350216476,
+    "diet": 41400.00000000174
+  },
+  "byCitizenType": {
+    "Student": 15620.957964238945,
+    "Commuter": 65313.57301243407,
+    "RemoteWorker": 10510.173373543423
+  },
+  "timeSeries": [
+    {
+      "day": 1.0,
+      "transport": 6544.799999999954,
+      "homeEnergy": 10130.389127888673,
+      "diet": 13799.999999999363,
+      "total": 30475.189127888698
+    },
+    {
+      "day": 2.0,
+      "transport": 6544.799999999954,
+      "homeEnergy": 10145.130193842428,
+      "diet": 13799.999999999363,
+      "total": 30489.93019384237
+    },
+    {
+      "day": 3.0,
+      "transport": 6544.799999999954,
+      "homeEnergy": 10134.785028485374,
+      "diet": 13799.999999999363,
+      "total": 30479.585028485406
+    }
+  ]
+}

@@ -1,74 +1,74 @@
-## Phase 1: MDD Foundation (Ready for Generation)
+## Phase 1: MDD Foundation (Completed)
 
-    [ ] Repo Scaffold: Create folder structure (`specs/`, `src/eco/`, `tests/`, `out/`).
+    [x] Repo Scaffold: Create folder structure (`specs/`, `src/eco/`, `tests/`, `out/`).
 
-    [ ] CLI Bootstrap: Initialize `typer` app with commands: `validate`, `run`, `list-scenarios`.
+    [x] CLI Bootstrap: Initialize `typer` app with commands: `validate`, `run`, `list-scenarios`.
 
-    [ ] Spec Templates: Create starter Markdown specs with fenced YAML blocks:
-        - [ ] `world.md`
-        - [ ] `citizens.md`
-        - [ ] `rules.md`
-        - [ ] `metrics.md`
-        - [ ] `scenarios.md`
-        - [ ] `prejudices.md`
+    [x] Spec Templates: Create starter Markdown specs with fenced YAML blocks:
+        - [x] `world.md`
+        - [x] `citizens.md`
+        - [x] `rules.md`
+        - [x] `metrics.md`
+        - [x] `scenarios.md`
+        - [x] `prejudices.md`
 
-    [ ] Validation Models: Implement pydantic models for every spec file.
+    [x] Validation Models: Implement pydantic models for every spec file.
 
-    [ ] Loader: Read Markdown → extract YAML → validate → return structured config.
+    [x] Loader: Read Markdown → extract YAML → validate → return structured config.
 
-    [ ] Error UX: Friendly validation errors (show file, field path, and suggestion).
+    [x] Error UX: Friendly validation errors (show file, field path, and suggestion).
 
-## Phase 2: Core Simulation (In Progress)
+## Phase 2: Core Simulation (Completed)
 
-    [ ] Population Builder:
-        - [ ] Convert distribution shares into counts (handle rounding cleanly).
-        - [ ] Validate shares sum to 1.0 (± small epsilon).
+    [x] Population Builder:
+        - [x] Convert distribution shares into counts (handle rounding cleanly).
+        - [x] Validate shares sum to 1.0 (± small epsilon).
 
-    [ ] Activity Generation (Deterministic):
-        - [ ] Weekday/weekend handling from `commuteDaysPerWeek`.
-        - [ ] Build activity objects (transport, home energy, diet).
+    [x] Activity Generation (Deterministic):
+        - [x] Weekday/weekend handling from `commuteDaysPerWeek`.
+        - [x] Build activity objects (transport, home energy, diet).
 
-    [ ] Emissions Calculator:
-        - [ ] Transport: miles × factor(mode)
-        - [ ] Home Energy: kwh × kgco2_per_kwh
-        - [ ] Diet: meals × factor(pattern)
+    [x] Emissions Calculator:
+        - [x] Transport: miles × factor(mode)
+        - [x] Home Energy: kwh × kgco2_per_kwh
+        - [x] Diet: meals × factor(pattern)
 
-    [ ] Aggregation:
-        - [ ] Total kgCO2
-        - [ ] By category
-        - [ ] By citizen type
-        - [ ] Time series per day
+    [x] Aggregation:
+        - [x] Total kgCO2
+        - [x] By category
+        - [x] By citizen type
+        - [x] Time series per day
 
-    [ ] Golden Tests:
-        - [ ] Add `tests/fixtures/tiny_specs/`
-        - [ ] Commit expected `expected.json`
-        - [ ] Test exact match totals for seed + days
+    [x] Golden Tests:
+        - [x] Add `tests/fixtures/tiny_specs/`
+        - [x] Commit expected `expected.json`
+        - [x] Test exact match totals for seed + days
 
-## Phase 3: Scenarios & Ethics Twist (Pending)
+## Phase 3: Scenarios & Ethics Twist (Completed)
 
-    [ ] Scenario Overrides:
-        - [ ] Deep merge overrides into base specs
-        - [ ] Validate scenario references (unknown citizen types, etc.)
+    [x] Scenario Overrides:
+        - [x] Deep merge overrides into base specs
+        - [x] Validate scenario references (unknown citizen types, etc.)
 
-    [ ] Scenario Runs:
-        - [ ] Run baseline + 2 variants
-        - [ ] Output `out/report.md` and `out/report.json` per run
+    [x] Scenario Runs:
+        - [x] Run baseline + 2 variants
+        - [x] Output `out/report.md` and `out/report.json` per run
 
-    [ ] Data Prejudice Audit Integration:
-        - [ ] Fill out `prejudices.md` with at least 5 assumptions + fixes
-        - [ ] Implement at least 2 fixes in the spec (not code)
-        - [ ] Compare before/after outputs and summarize change
+    [x] Data Prejudice Audit Integration:
+        - [x] Fill out `prejudices.md` with at least 5 assumptions + fixes
+        - [x] Implement at least 2 fixes in the spec (not code)
+        - [x] Compare before/after outputs and summarize change
 
-## Phase 4: Reporting Polish (Future)
+## Phase 4: Reporting Polish (Completed)
 
-    [ ] Spec-driven Report Renderer:
-        - [ ] Implement `metrics.md` sections in Markdown output
-        - [ ] Add tables for breakdowns
-        - [ ] Add run metadata: scenario, days, seed, spec hash
+    [x] Spec-driven Report Renderer:
+        - [x] Implement `metrics.md` sections in Markdown output
+        - [x] Add tables for breakdowns
+        - [x] Add run metadata: scenario, days, seed, spec hash
 
-    [ ] JSON Export:
-        - [ ] Stable schema for autograding
-        - [ ] Include category + type breakdowns + time series
+    [x] JSON Export:
+        - [x] Stable schema for autograding
+        - [x] Include category + type breakdowns + time series
 
     [ ] Optional: Pretty Terminal Output (Rich):
         - [ ] Summary panel + tables
@@ -76,7 +76,7 @@
 ## Phase 5: Stretch Goals (Optional)
 
     [ ] Access Constraints:
-        - [ ] Add fields like `transport.access: [bus, walk]`
+        - [x] Add fields like `transport.access: [bus, walk]`
         - [ ] Enforce constraints in activity generation
 
     [ ] Policy Levers:
