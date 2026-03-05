@@ -1,0 +1,80 @@
+This sounds like an exciting assignment! "Vibe Coding" is all about moving fast and letting the AI handle the heavy lifting while you steer the ship. Since you need to build an MCP server with two tools and then use it in an app, let’s break this down into a clear roadmap.
+
+1. Choose Your "Vibe" (Project Idea)
+For a student project, you want tools that are easy to test but look impressive. Here are three beginner-friendly ideas:
+
+The "Study Buddy" Server:
+
+Tool 1: summarize_text (Takes a long string and returns a 3-sentence summary).
+
+Tool 2: generate_quiz (Takes a topic and returns 3 multiple-choice questions).
+
+The "Dev Helper" Server:
+
+Tool 1: get_system_stats (Returns your current CPU/RAM usage).
+
+Tool 2: format_json (Takes messy text and returns pretty-printed JSON).
+
+The "Vibe Checker" Server:
+
+Tool 1: get_weather (Fetches live data from a free API like Open-Meteo).
+
+Tool 2: recommend_playlist (Returns a Spotify link based on the weather "vibe").
+
+2. Implementation Guide (Python & FastMCP)
+The easiest way to do this manually is using the FastMCP library in Python. It handles the "protocol" part so you can focus on the "tools."
+
+Step 1: Setup
+
+Bash
+pip install fastmcp
+Step 2: Create your server (server.py)
+This example implements a simple "Utility" server with an Echo tool and a Roll Dice tool.
+
+Python
+# Team Members: [Your Name], [Partner Name]
+from fastmcp import FastMCP
+import random
+
+# Initialize the MCP server
+mcp = FastMCP("VibeUtility")
+
+@mcp.tool()
+def echo_message(message: str) -> str:
+    """Repeats the message back to the user to confirm connection."""
+    return f"Server received: {message}"
+
+@mcp.tool()
+def roll_dice(sides: int = 6) -> str:
+    """Rolls a virtual dice with a specified number of sides."""
+    result = random.randint(1, sides)
+    return f"You rolled a {result} on a {sides}-sided dice!"
+
+if __name__ == "__main__":
+    mcp.run()
+3. Connecting to your IDE
+Once your code is ready, you need to "plug it in" so your AI agent (like Claude or Gemini) can see it.
+
+In VS Code (Copilot): Open your settings.json and add your server to the github.copilot.chat.mcp.servers section.
+
+In Claude Desktop: Edit your claude_desktop_config.json file:
+
+JSON
+"mcpServers": {
+  "vibe-utility": {
+    "command": "python",
+    "args": ["/absolute/path/to/your/server.py"]
+  }
+}
+4. The "Vibe Code" Final Step
+After the server is running, start a new chat in your IDE. Because you have the MCP server connected, you can simply say:
+
+"Hey, use my VibeUtility server to roll a 20-sided dice, then write a short Python script for a game that uses that result."
+
+The AI will call your roll_dice tool, get the "vibe" (the number), and then write the code for you!
+
+Next Steps
+Would you like me to generate the full code for a specific idea (like the Weather or Study Buddy one), or should I help you write the specific prompt to give your IDE once the server is connected?
+
+Build an MCP Server in 20 Minutes
+This video provides a practical, step-by-step walkthrough of building an MCP server from scratch using Python, which is perfect for satisfying the manual coding requirement of your assignment.
