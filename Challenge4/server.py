@@ -1,4 +1,4 @@
-# Team Members: [Your Name], [Partner Name]
+# Team Members: [Weichen Lyu], [Jaden Fang]
 from fastmcp import FastMCP
 import random
 
