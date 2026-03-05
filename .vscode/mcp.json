@@ -1,0 +1,12 @@
+{
+	"servers": {
+		"my-mcp-server-0fa6f507": {
+			"type": "stdio",
+			"command": "python",
+			"args": [
+				".\\Challenge4\\server.py"
+			]
+		}
+	},
+	"inputs": []
+}
